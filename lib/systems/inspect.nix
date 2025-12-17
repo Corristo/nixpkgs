@@ -377,6 +377,10 @@ rec {
         gnueabihf
         gnuabielfv1
         gnuabielfv2
+        gnutsan
+        gnumsan
+        llvmtsan
+        llvmmsan
       ];
     isMusl =
       with abis;
@@ -386,6 +390,18 @@ rec {
         musleabihf
         muslabin32
         muslabi64
+      ];
+    isTsan =
+      with abis;
+      map (a: { abi = a; }) [
+        gnutsan
+        llvmtsan
+      ];
+    isMsan =
+      with abis;
+      map (a: { abi = a; }) [
+        gnumsan
+        llvmmsan
       ];
     isUClibc =
       with abis;

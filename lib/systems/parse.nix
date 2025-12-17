@@ -727,6 +727,22 @@ rec {
       abi = "n32";
     };
 
+    gnutsan = {
+      abi = "gnutsan";
+    };
+
+    gnumsan = {
+      abi = "gnumsan";
+    };
+
+    llvmtsan = {
+      abi = "llvmtsan";
+    };
+
+    llvmmsan = {
+      abi = "llvmmsan";
+    };
+
     gnuabielfv2 = {
       abi = "elfv2";
     };
