@@ -33,6 +33,7 @@
 
 let
   pythonModules = pp: [
+    pp.distutils
     pp.mako
     pp.markdown
     pp.setuptools
