@@ -42,6 +42,7 @@ stdenv.mkDerivation (finalAttrs: {
     meson
     ninja
     pkg-config
+    glib
   ] ++ lib.optionals withIntrospection [
     gobject-introspection
     gi-docgen

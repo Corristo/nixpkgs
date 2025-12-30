@@ -72,6 +72,7 @@ stdenv.mkDerivation rec {
     docbook_xsl
     docbook_xml_dtd_412
     docbook_xml_dtd_45
+    glib
   ] ++ lib.optionals withIntrospection [
     gobject-introspection
     vala

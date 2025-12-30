@@ -43,6 +43,7 @@ stdenv.mkDerivation (finalAttrs: {
     ninja
     pkg-config
     python3
+    glib
   ] ++ lib.optionals withIntrospection [
     gobject-introspection
     gi-docgen

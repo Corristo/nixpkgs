@@ -45,6 +45,7 @@ stdenv.mkDerivation (finalAttrs: {
     gettext
     gtk-doc
     docbook_xsl
+    glib # for glib-genmarshal
     docbook_xml_dtd_412
   ] ++ lib.optionals withIntrospection [
     gobject-introspection
