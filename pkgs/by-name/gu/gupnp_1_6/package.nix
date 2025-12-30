@@ -5,14 +5,18 @@
   meson,
   ninja,
   pkg-config,
-  gobject-introspection,
-  vala,
-  gi-docgen,
   glib,
   gssdp_1_6,
   libsoup_3,
   libxml2,
   gnome,
+  withIntrospection ?
+    lib.meta.availableOn stdenv.hostPlatform gobject-introspection
+    && stdenv.hostPlatform.emulatorAvailable buildPackages,
+  buildPackages,
+  gi-docgen,
+  gobject-introspection,
+  vala,
 }:
 
 stdenv.mkDerivation (finalAttrs: {
@@ -22,8 +26,8 @@ stdenv.mkDerivation (finalAttrs: {
   outputs = [
     "out"
     "dev"
-    "devdoc"
-  ];
+  ]
+  ++ lib.optionals withIntrospection [ "devdoc" ];
 
   src = fetchurl {
     url = "mirror://gnome/sources/gupnp/${lib.versions.majorMinor finalAttrs.version}/gupnp-${finalAttrs.version}.tar.xz";
@@ -38,9 +42,10 @@ stdenv.mkDerivation (finalAttrs: {
     meson
     ninja
     pkg-config
+  ] ++ lib.optionals withIntrospection [
     gobject-introspection
-    vala
     gi-docgen
+    vala
   ];
 
   propagatedBuildInputs = [
@@ -51,7 +56,9 @@ stdenv.mkDerivation (finalAttrs: {
   ];
 
   mesonFlags = [
-    "-Dgtk_doc=true"
+    (lib.mesonBool "gtk_doc" withIntrospection)
+    (lib.mesonBool "introspection" withIntrospection)
+    (lib.mesonBool "vapi" withIntrospection)
   ];
 
   # On Darwin: Failed to bind socket, Operation not permitted
@@ -59,7 +66,9 @@ stdenv.mkDerivation (finalAttrs: {
 
   postFixup = ''
     # Cannot be in postInstall, otherwise _multioutDocs hook in preFixup will move right back.
-    moveToOutput "share/doc" "$devdoc"
+    if [ "${lib.boolToString withIntrospection}" == "true" ]; then
+      moveToOutput "share/doc" "$devdoc"
+    fi
   '';
 
   passthru = {

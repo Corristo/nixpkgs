@@ -5,14 +5,18 @@
   meson,
   ninja,
   pkg-config,
-  gobject-introspection,
-  vala,
-  gi-docgen,
   python3,
   libsoup_3,
   glib,
   gnome,
   gssdp-tools,
+  withIntrospection ?
+    lib.meta.availableOn stdenv.hostPlatform gobject-introspection
+    && stdenv.hostPlatform.emulatorAvailable buildPackages,
+  buildPackages,
+  gobject-introspection,
+  gi-docgen,
+  vala,
 }:
 
 stdenv.mkDerivation (finalAttrs: {
@@ -22,8 +26,8 @@ stdenv.mkDerivation (finalAttrs: {
   outputs = [
     "out"
     "dev"
-    "devdoc"
-  ];
+  ]
+  ++ lib.optionals withIntrospection [ "devdoc" ];
 
   src = fetchurl {
     url = "mirror://gnome/sources/gssdp/${lib.versions.majorMinor finalAttrs.version}/gssdp-${finalAttrs.version}.tar.xz";
@@ -38,10 +42,11 @@ stdenv.mkDerivation (finalAttrs: {
     meson
     ninja
     pkg-config
-    gobject-introspection
-    vala
-    gi-docgen
     python3
+  ] ++ lib.optionals withIntrospection [
+    gobject-introspection
+    gi-docgen
+    vala
   ];
 
   buildInputs = [
@@ -53,10 +58,12 @@ stdenv.mkDerivation (finalAttrs: {
   ];
 
   mesonFlags = [
-    "-Dgtk_doc=true"
+    (lib.mesonBool "gtk_doc" withIntrospection)
     "-Dsniffer=false"
     # This packages only has manpages for gssdp-device-sniffer, which we disabled above.
     "-Dmanpages=false"
+    (lib.mesonBool "introspection" withIntrospection)
+    (lib.mesonBool "vapi" withIntrospection)
   ];
 
   # On Darwin: Failed to bind socket, Operation not permitted
@@ -64,11 +71,13 @@ stdenv.mkDerivation (finalAttrs: {
 
   postFixup = ''
     # Move developer documentation to devdoc output.
-    # Cannot be in postInstall, otherwise _multioutDocs hook in preFixup will move right back.
-    find -L "$out/share/doc" -type f -regex '.*\.devhelp2?' -print0 \
-      | while IFS= read -r -d ''' file; do
-        moveToOutput "$(dirname "''${file/"$out/"/}")" "$devdoc"
-    done
+    if [ "${lib.boolToString withIntrospection}" == "true" ]; then
+      # Cannot be in postInstall, otherwise _multioutDocs hook in preFixup will move right back.
+      find -L "$out/share/doc" -type f -regex '.*\.devhelp2?' -print0 \
+        | while IFS= read -r -d ''' file; do
+          moveToOutput "$(dirname "''${file/"$out/"/}")" "$devdoc"
+      done
+    fi
   '';
 
   passthru = {

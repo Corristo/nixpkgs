@@ -79,6 +79,8 @@ stdenv.mkDerivation (finalAttrs: {
   doCheck = false;
 
   mesonFlags = [
+    (lib.mesonEnable "introspection" withIntrospection)
+    (lib.mesonBool "use_systemd" systemdSupport)
     # Provide dbus-daemon fallback when it is not already running when
     # at-spi2-bus-launcher is executed. This allows us to avoid
     # including the entire dbus closure in libraries linked with
@@ -88,12 +90,6 @@ stdenv.mkDerivation (finalAttrs: {
   ++ lib.optionals systemdSupport [
     # Same as the above, but for dbus-broker
     "-Ddbus_broker=/run/current-system/sw/bin/dbus-broker-launch"
-  ]
-  ++ lib.optionals (!systemdSupport) [
-    "-Duse_systemd=false"
-  ]
-  ++ lib.optionals (!withIntrospection) [
-    (lib.mesonEnable "introspection" false)
   ]
   ++ lib.optionals stdenv.hostPlatform.isStatic [
     # The adaptor is only available as a shared object, as gtk2 loads it dynamically

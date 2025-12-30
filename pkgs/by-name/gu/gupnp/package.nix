@@ -6,8 +6,6 @@
   meson,
   ninja,
   pkg-config,
-  gobject-introspection,
-  vala,
   gtk-doc,
   docbook_xsl,
   docbook_xml_dtd_412,
@@ -18,6 +16,12 @@
   libxml2,
   libuuid,
   gnome,
+  withIntrospection ?
+    lib.meta.availableOn stdenv.hostPlatform gobject-introspection
+    && stdenv.hostPlatform.emulatorAvailable buildPackages,
+  buildPackages,
+  gobject-introspection,
+  vala,
 }:
 
 stdenv.mkDerivation rec {
@@ -64,12 +68,13 @@ stdenv.mkDerivation rec {
     meson
     ninja
     pkg-config
-    gobject-introspection
-    vala
     gtk-doc
     docbook_xsl
     docbook_xml_dtd_412
     docbook_xml_dtd_45
+  ] ++ lib.optionals withIntrospection [
+    gobject-introspection
+    vala
   ];
 
   buildInputs = [
@@ -84,7 +89,9 @@ stdenv.mkDerivation rec {
   ];
 
   mesonFlags = [
-    "-Dgtk_doc=${lib.boolToString (stdenv.buildPlatform == stdenv.hostPlatform)}"
+    (lib.mesonBool "gtk_doc" (stdenv.buildPlatform == stdenv.hostPlatform))
+    (lib.mesonBool "introspection" withIntrospection)
+    (lib.mesonBool "vapi" withIntrospection)
   ];
 
   # Bail out! ERROR:../tests/test-bugs.c:168:test_on_timeout: code should not be reached

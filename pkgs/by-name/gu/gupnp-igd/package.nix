@@ -6,13 +6,17 @@
   meson,
   ninja,
   gettext,
-  gobject-introspection,
   gtk-doc,
   docbook_xsl,
   docbook_xml_dtd_412,
   glib,
   gupnp_1_6,
   gnome,
+  withIntrospection ?
+    lib.meta.availableOn stdenv.hostPlatform gobject-introspection
+    && stdenv.hostPlatform.emulatorAvailable buildPackages,
+  buildPackages,
+  gobject-introspection,
 }:
 
 stdenv.mkDerivation (finalAttrs: {
@@ -39,10 +43,11 @@ stdenv.mkDerivation (finalAttrs: {
     meson
     ninja
     gettext
-    gobject-introspection
     gtk-doc
     docbook_xsl
     docbook_xml_dtd_412
+  ] ++ lib.optionals withIntrospection [
+    gobject-introspection
   ];
 
   propagatedBuildInputs = [
@@ -51,8 +56,8 @@ stdenv.mkDerivation (finalAttrs: {
   ];
 
   mesonFlags = [
-    "-Dgtk_doc=${lib.boolToString (stdenv.buildPlatform == stdenv.hostPlatform)}"
-    "-Dintrospection=${lib.boolToString (stdenv.buildPlatform == stdenv.hostPlatform)}"
+    (lib.mesonBool "gtk_doc" (stdenv.buildPlatform == stdenv.hostPlatform))
+    (lib.mesonBool "introspection" withIntrospection)
   ];
 
   # Seems to get stuck sometimes.
