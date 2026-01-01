@@ -40,6 +40,9 @@
   nix-update-script,
   libx11,
   libOnly ? false,
+  withIntrospection ?
+    lib.meta.availableOn stdenv.hostPlatform gobject-introspection
+    && stdenv.hostPlatform.emulatorAvailable buildPackages,
 }:
 
 let
@@ -122,10 +125,11 @@ stdenv.mkDerivation (finalAttrs: {
     "CC_FOR_BUILD=${buildPackages.stdenv.cc}/bin/${buildPackages.stdenv.cc.targetPrefix}cc"
     "CXX_FOR_BUILD=${buildPackages.stdenv.cc}/bin/${buildPackages.stdenv.cc.targetPrefix}c++"
     "GLIB_COMPILE_RESOURCES=${lib.getDev buildPackages.glib}/bin/glib-compile-resources"
+  ] ++ lib.optionals withIntrospection [
     "PKG_CONFIG_VAPIGEN_VAPIGEN=${lib.getBin buildPackages.vala}/bin/vapigen"
+  ] ++ [
     "--disable-memconf"
     "--disable-gtk2"
-    "--with-python=${python3BuildEnv.interpreter}"
     (lib.enableFeature (!libOnly && dconf != null) "dconf")
     (lib.enableFeature (!libOnly && libnotify != null) "libnotify")
     (lib.enableFeature withWayland "wayland")
@@ -138,6 +142,9 @@ stdenv.mkDerivation (finalAttrs: {
     (lib.enableFeature (!libOnly) "install-tests")
     (lib.enableFeature (!libOnly) "emoji-dict")
     (lib.enableFeature (!libOnly) "unicode-dict")
+  ]
+  ++ lib.optionals withIntrospection [
+    "--with-python=${python3BuildEnv.interpreter}"
   ]
   ++ lib.optionals (!libOnly) [
     "--with-unicode-emoji-dir=${unicode-emoji}/share/unicode/emoji"
@@ -163,8 +170,11 @@ stdenv.mkDerivation (finalAttrs: {
     python3BuildEnv
     dbus-launch
     glib # required to satisfy AM_PATH_GLIB_2_0
+  ]
+  ++ lib.optionals withIntrospection [
     vala
     gobject-introspection
+    python3.pkgs.pygobject3 # for pygobject overrides
   ]
   ++ lib.optionals (!libOnly) [
     wrapGAppsHook3
@@ -181,11 +191,9 @@ stdenv.mkDerivation (finalAttrs: {
     dbus
     systemd
     dconf
-    python3.pkgs.pygobject3 # for pygobject overrides
     isocodes
     json-glib
     libx11
-    vala # for share/vala/Makefile.vapigen (PKG_CONFIG_VAPIGEN_VAPIGEN)
   ]
   ++ lib.optionals (!libOnly) [
     gtk3
